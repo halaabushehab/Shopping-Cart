@@ -1,41 +1,40 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"; // استيراد createAsyncThunk و createSlice معًا
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
-// ✅  جلب المنتجات باستخدام createAsyncThunk
-export const fetchProducts = createAsyncThunk(
-  "products/fetchProducts",
-  async (_, { rejectWithValue }) => {
+const initialState = {
+  items: [],
+  status: null,
+};
+
+export const productsFetch = createAsyncThunk(
+  "products/productsFetch",
+  async () => {
     try {
-      const response = await fetch("https://6784de3b1ec630ca33a61161.mockapi.io/Products");
-      if (!response.ok) throw new Error("Failed to fetch products");
-      const data = await response.json();
-      console.log("✅ Products from API:", data); // ✅ تحقق من البيانات المسترجعة
-      return data;
+      const response = await axios.get(
+        "https://6784de3b1ec630ca33a61161.mockapi.io/Products"
+      );
+      return response.data;
     } catch (error) {
-      console.error("❌ Error fetching products:", error);
-      return rejectWithValue(error.message);
+      console.log(error);
     }
   }
 );
 
-// ✅  إنشاء Slice المنتجات
 const productsSlice = createSlice({
   name: "products",
-  initialState: { data: [], loading: false, error: null },
-  reducers: {}, // لا يوجد أي `reducers` هنا، لأنه يتم التحكم من خلال `extraReducers`
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchProducts.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchProducts.fulfilled, (state, action) => {
-        console.log("✅ Products received in Redux:", action.payload);
-        state.loading = false;
-        state.data = action.payload;
-      })
-      .addCase(fetchProducts.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message;
-      });
+  initialState,
+  reducers: {},
+  extraReducers: {
+    [productsFetch.pending]: (state, action) => {
+      state.status = "pending";
+    },
+    [productsFetch.fulfilled]: (state, action) => {
+      state.items = action.payload;
+      state.status = "success";
+    },
+    [productsFetch.rejected]: (state, action) => {
+      state.status = "rejected";
+    },
   },
 });
 
